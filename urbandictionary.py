@@ -41,7 +41,7 @@ useAPI = False
 host = "urbandictionary.com"
 apiHost = "api.urbandictionary.com"
 
-#host = socket.gethostbyname(host)
+# host = socket.gethostbyname(host)
 print_tm(f"Using host {host}")
 
 
@@ -63,6 +63,7 @@ if not isdir(browseDir):
 if not isdir(dictDir):
 	makedirs(dictDir)
 
+
 def fetchURL(url: str):
 	while True:
 		try:
@@ -81,7 +82,7 @@ def fetchURL(url: str):
 		if sc >= 400 and sc < 500:
 			return f"status_code={sc}"
 		return
-		#sleep(0.1)
+		# sleep(0.1)
 
 
 def nextWordFromBrowseText(text: str) -> str:
@@ -91,18 +92,18 @@ def nextWordFromBrowseText(text: str) -> str:
 	j = text.find('href="', i)
 	if j == -1:
 		return None
-	k = text.find('word=', j + 6)
+	k = text.find("word=", j + 6)
 	if k == -1:
 		return None
 	end = text.find('"', k + 5)
 	if end == -1:
 		return None
-	return text[k + 5:end]
+	return text[k + 5 : end]
 
 
 def fetchBrowse(word: str) -> "Tuple[str, str]":
 	"""
-		returns (text, nextWord)
+	returns (text, nextWord)
 	"""
 	fpath = join(browseDir, word.encode("utf-8").hex())
 	if isfile(fpath):
@@ -141,15 +142,16 @@ def filePathFromWord(b_word: bytes) -> str:
 		bw[4:8].hex() + "-" + sha1(b_word).hexdigest()[:8],
 	)
 
+
 def downloadWord(word: str):
 	fpath = join(dictDir, filePathFromWord(word.encode("utf-8")))
 	if isfile(fpath + ".gz") or isfile(fpath):
-		#print_tm(f"file exists: {fpath}")
+		# print_tm(f"file exists: {fpath}")
 		return 0
 	text = fetchURL(
 		f"http://{apiHost}/v0/define?term={word}"
-		if useAPI else
-		f"https://{host}/define.php?term={word}"
+		if useAPI
+		else f"https://{host}/define.php?term={word}"
 	)
 	if text is None:
 		return 0
@@ -158,13 +160,14 @@ def downloadWord(word: str):
 		makedirs(parent)
 	with gzip.open(fpath + ".gz", mode="wt", encoding="utf-8") as _file:
 		_file.write(text)
-	#print_tm(f"file saved: {fpath}")
+	# print_tm(f"file saved: {fpath}")
 	return 1
 
 
 re_define = re.compile(
 	'<a href="/define.php\?term=(.*?)">',
 )
+
 
 def fetchWordsOfBrowseFile(fname, workerI):
 	with open(join(browseDir, fname), "r", encoding="utf-8") as _file:
@@ -202,11 +205,15 @@ queue = Queue(maxsize=max_queue_size)
 if __name__ == "__main__":
 	# Set up some threads to fetch the enclosures
 	for workerI in range(num_workers):
-		worker = Thread(target=workerLoop, args=(workerI, queue,))
+		worker = Thread(
+			target=workerLoop,
+			args=(
+				workerI,
+				queue,
+			),
+		)
 		worker.setDaemon(True)
 		worker.start()
 	for fname in listdir(browseDir):
 		queue.put(fname)
-		#print_tm(f"queue size: {queue.qsize()}")		
-
-
+		# print_tm(f"queue size: {queue.qsize()}")
