@@ -18,18 +18,18 @@
 # If not, see <http://www.gnu.org/licenses/gpl.txt>.
 
 
-import os
-from os import makedirs, listdir
-from os.path import join, isdir, isfile, dirname
-import requests
+import gzip
 import html
+import os
 import re
 from hashlib import sha1
-from time import sleep, strftime
+from os import listdir, makedirs
+from os.path import dirname, isdir, isfile, join
 from queue import Queue
 from threading import Thread
-import socket
-import gzip
+from time import sleep, strftime
+
+import requests
 
 
 def print_tm(msg):
@@ -81,7 +81,7 @@ def fetchURL(url: str):
 			continue
 		if sc >= 400 and sc < 500:
 			return f"status_code={sc}"
-		return
+		return None
 		# sleep(0.1)
 
 
@@ -101,13 +101,13 @@ def nextWordFromBrowseText(text: str) -> str:
 	return text[k + 5 : end]
 
 
-def fetchBrowse(word: str) -> "Tuple[str, str]":
+def fetchBrowse(word: str) -> "(str, str)":
 	"""
 	returns (text, nextWord)
 	"""
 	fpath = join(browseDir, word.encode("utf-8").hex())
 	if isfile(fpath):
-		with open(fpath, "r", encoding="utf-8") as _file:
+		with open(fpath, encoding="utf-8") as _file:
 			text = _file.read()
 		print_tm(f"loaded: {fpath} for word {word}")
 	else:
@@ -151,7 +151,7 @@ def downloadWord(word: str):
 	text = fetchURL(
 		f"http://{apiHost}/v0/define?term={word}"
 		if useAPI
-		else f"https://{host}/define.php?term={word}"
+		else f"https://{host}/define.php?term={word}",
 	)
 	if text is None:
 		return 0
@@ -165,12 +165,12 @@ def downloadWord(word: str):
 
 
 re_define = re.compile(
-	'<a href="/define.php\?term=(.*?)">',
+	r'<a href="/define.php\?term=(.*?)">',
 )
 
 
 def fetchWordsOfBrowseFile(fname, workerI):
-	with open(join(browseDir, fname), "r", encoding="utf-8") as _file:
+	with open(join(browseDir, fname), encoding="utf-8") as _file:
 		text = _file.read()
 	count = 0
 	for word in re_define.findall(text):
@@ -178,12 +178,13 @@ def fetchWordsOfBrowseFile(fname, workerI):
 	if count > 0:
 		print_tm(
 			f'worker{workerI}: downloaded {count} words'
-			f' from "{bytes.fromhex(fname).decode("utf-8")}"'
+			f' from "{bytes.fromhex(fname).decode("utf-8")}"',
 		)
 
 
 def workerLoop(workerI, q):
-	"""This is the worker thread function.
+	"""
+	This is the worker thread function.
 	It processes items in the queue one after
 	another.  These daemon threads go into an
 	infinite loop, and only exit when

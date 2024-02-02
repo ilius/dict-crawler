@@ -3,7 +3,7 @@ select = [
     "B", # flake8-bugbear
     "C4", # flake8-comprehensions
     "COM", # flake8-commas
-    "D", # pydocstyle
+    # "D", # pydocstyle
     "E", # pycodestyle Error
     "EXE", # flake8-executable
     "F", # Pyflakes
@@ -38,6 +38,7 @@ ignore = [
     "D104", # Missing docstring in public package
     "D105", # Missing docstring in magic method
     "D107", # Missing docstring in `__init__`
+    "D200", # One-line docstring should fit on one line
     "D205", # 1 blank line required between summary line and description
     "D206", # Docstring should be indented with spaces, not tabs
     "D211", # (Do not enable) no-blank-line-before-class
